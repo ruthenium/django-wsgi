@@ -60,8 +60,19 @@ class django_view(object):
     def __init__(self, wsgi_app):
         self.wsgi_app = wsgi_app
 
-    def __call__(self, request):
+    def __call__(self, request, path=None):
         environ = request.environ
+
+        script_name = environ.get('SCRIPT_NAME', u'')
+        if not path:
+            path = r'/'
+            script_name += environ['PATH_INFO']
+        else:
+            script_name += (environ['PATH_INFO'][:-len(path)])
+
+        environ['SCRIPT_NAME'] = script_name.rstrip('/')
+        environ['PATH_INFO'] = (path if path.startswith('/') else u'/' +
+                path)
         results = {}
         buffer = []
         def start_response(status, response_headers, exc_info=None):
